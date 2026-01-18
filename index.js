@@ -4,52 +4,88 @@ import mysql from "mysql2/promise";
 import path from "path";
 import { fileURLToPath } from 'url';
 
+// Fix ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Database connection (FIXED - no top-level await)
 const pool = mysql.createPool({
-    host: process.env.MYSQLHOST,
-    port: parseInt(process.env.MYSQLPORT),
-    user: process.env.MYSQLUSER,
-    password: process.env.MYSQLPASSWORD,
-    database: process.env.MYSQLDATABASE,
+    host: process.env.MYSQLHOST || 'maglev.proxy.rlwy.net',
+    port: parseInt(process.env.MYSQLPORT) || 17152,
+    user: process.env.MYSQLUSER || 'root',
+    password: process.env.MYSQLPASSWORD || 'miEpEDydCZFepmGDUEYRGMNGfokoqRSf',
+    database: process.env.MYSQLDATABASE || 'railway',
     connectionLimit: 10,
     connectTimeout: 30000,
     ssl: { rejectUnauthorized: false }
 });
 
-console.log('🔄 Connecting to MySQL...');
-console.log('Host:', process.env.MYSQLHOST);
-
-await pool.getConnection();
-console.log('✅ MySQL Connected Successfully!');
-
-
-// Your server code...
-
-
+// IMPORT YOUR CONTROLLERS (ADD THESE)
+import { Login } from "./Controllers/Login.js";
+import { getData, addingTeacher, updateData, deletingTeacherData } from "./Controllers/TeacherController.js";
+import { getStudentData, StudentData, updateStudentData, deletingStudentData } from "./Controllers/StudentController.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+let dbConnected = false;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// HEALTH CHECK (NEW)
+app.get('/health', async (req, res) => {
+    try {
+        const connection = await pool.getConnection();
+        await connection.ping();
+        connection.release();
+        dbConnected = true;
+        res.json({ 
+            status: 'OK', 
+            db: 'connected',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({ status: 'ERROR', db: 'disconnected', error: error.message });
+    }
+});
+
+// API ROUTES (FIXED - BEFORE static files)
+app.get('/api/health', (req, res) => res.json({ status: 'API working' }));
+
+app.get("/login", (req, res) => Login(req, res, pool));
+app.get("/teachers", (req, res) => getData(req, res, pool));
+app.post("/teacherData", (req, res) => addingTeacher(req, res, pool));
+app.post("/updateData", (req, res) => updateData(req, res, pool));
+app.post("/deletingTeacherData", (req, res) => deletingTeacherData(req, res, pool));
+app.get("/StudentData", (req, res) => getStudentData(req, res, pool));
+app.post("/StudentData", (req, res) => StudentData(req, res, pool));
+app.post("/updateStudentData", (req, res) => updateStudentData(req, res, pool));
+app.post("/deletingStudentData", (req, res) => deletingStudentData(req, res, pool));
+
+// Serve React build (AFTER API routes)
 const reactBuildPath = path.join(__dirname, "view", "build");
-
 app.use(express.static(reactBuildPath));
-
-// Your API routes (unchanged)
-app.get("/login", (req, res) => Login(req, res, db));
-app.get("/teachers", (req, res) => getData(req, res, db));
-// ... all your routes stay SAME
 
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(reactBuildPath, "index.html"));
 });
 
-app.listen(PORT, () => {
-    console.log(`Started at port ${PORT}`);
+// 404 for API routes only
+app.use('/api/*', (req, res) => {
+    res.status(404).json({ error: 'API endpoint not found' });
+});
+
+app.listen(PORT, async () => {
+    try {
+        const connection = await pool.getConnection();
+        console.log('✅ MySQL Connected Successfully!');
+        connection.release();
+        console.log(`🚀 Server running on port ${PORT}`);
+    } catch (error) {
+        console.error('❌ MySQL connection failed:', error.message);
+    }
 });
 
 
