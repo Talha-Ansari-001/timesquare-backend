@@ -3,13 +3,27 @@ import cors from "cors";
 import mysql from "mysql2/promise";
 import path from "path";
 
-const db = await mysql.createConnection({
-    host: process.env.MYSQLHOST || "localhost",
-    user: process.env.MYSQLUSER || "root",
-    password: process.env.MYSQLPASSWORD || "",
-    database: process.env.MYSQLDATABASE || "TS",
-    port: process.env.MYSQLPORT || 3306
+const mysql = require('mysql2/promise');
+
+const pool = mysql.createPool({
+    host: process.env.MYSQLHOST,
+    port: parseInt(process.env.MYSQLPORT),
+    user: process.env.MYSQLUSER,
+    password: process.env.MYSQLPASSWORD,
+    database: process.env.MYSQLDATABASE,
+    connectTimeout: 30000,        // ← ADD THIS (30 seconds)
+    acquireTimeout: 60000,        // ← ADD THIS  
+    timeout: 60000,               // ← ADD THIS
+    ssl: { rejectUnauthorized: false }  // ← ADD THIS (Railway SSL)
 });
+
+console.log('Attempting DB connection...');
+pool.getConnection().then(() => {
+    console.log('✅ Database connected successfully!');
+}).catch(err => {
+    console.error('❌ DB Connection failed:', err.code, err.message);
+});
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
