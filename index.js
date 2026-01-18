@@ -49,7 +49,7 @@ app.get('/', (req, res) => {
     });
 });
 
-// ✅ ALL YOUR API ROUTES (Keep these FIRST)
+// ALL API ROUTES FIRST
 app.get("/login", (req, res) => Login(req, res, pool));
 app.get("/teachers", (req, res) => getData(req, res, pool));
 app.post("/teacherData", (req, res) => addingTeacher(req, res, pool));
@@ -60,12 +60,12 @@ app.post("/StudentData", (req, res) => StudentData(req, res, pool));
 app.post("/updateStudentData", (req, res) => updateStudentData(req, res, pool));
 app.post("/deletingStudentData", (req, res) => deletingStudentData(req, res, pool));
 
-// ✅ Serve React static files
+// Serve React static files
 const reactBuildPath = path.join(__dirname, "view", "build");
 app.use(express.static(reactBuildPath));
 
-// ✅ FIXED CATCH-ALL (Line 84 → THIS WORKS IN EXPRESS 5)
-app.get('*', (req, res) => {
+// 🔥 FIXED CATCH-ALL - WORKS IN EXPRESS 5 (Replace line 68)
+app.use((req, res) => {
     res.sendFile(path.join(reactBuildPath, "index.html"));
 });
 
