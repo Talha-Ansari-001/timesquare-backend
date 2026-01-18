@@ -38,10 +38,10 @@ app.get('/health', async (req, res) => {
     try {
         const connection = await pool.getConnection();
         connection.release();
-        res.json({ 
-            status: 'OK', 
-            db: 'connected', 
-            message: 'Times Square Backend LIVE! 🚀' 
+        res.json({
+            status: 'OK',
+            db: 'connected',
+            message: 'Times Square Backend LIVE! 🚀'
         });
     } catch (error) {
         res.status(500).json({ status: 'ERROR', db: 'disconnected' });
@@ -50,12 +50,12 @@ app.get('/health', async (req, res) => {
 
 // ✅ 2. ROOT ROUTE (NEW)
 app.get('/', (req, res) => {
-    res.json({ 
+    res.json({
         message: 'Times Square Academy Backend API ✅',
         endpoints: [
-            '/health', 
-            '/login', 
-            '/teachers', 
+            '/health',
+            '/login',
+            '/teachers',
             '/StudentData',
             '/teacherData (POST)'
         ],
@@ -79,7 +79,8 @@ const reactBuildPath = path.join(__dirname, "view", "build");
 app.use(express.static(reactBuildPath));
 
 // ✅ 5. React SPA catch-all (CORRECT SYNTAX)
-app.get('/app/*', (req, res) => {
+app.get('/app/(.*)', (req, res) => {
+    // your catch-all logic here
     res.sendFile(path.join(reactBuildPath, "index.html"));
 });
 
