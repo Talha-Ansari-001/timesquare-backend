@@ -4,7 +4,7 @@ import mysql from "mysql2/promise";
 import path from "path";
 import { fileURLToPath } from 'url';
 
-// Fix ES modules
+// ES modules fix
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -20,7 +20,7 @@ const pool = mysql.createPool({
     ssl: { rejectUnauthorized: false }
 });
 
-// IMPORT CONTROLLERS (UNCOMMENT FROM YOUR OLD CODE)
+// IMPORT YOUR CONTROLLERS (from your old working code)
 import { Login } from "./Controllers/Login.js";
 import { getData, addingTeacher, updateData, deletingTeacherData } from "./Controllers/TeacherController.js";
 import { getStudentData, StudentData, updateStudentData, deletingStudentData } from "./Controllers/StudentController.js";
@@ -33,27 +33,37 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ HEALTH CHECK (NEW)
+// ✅ 1. HEALTH CHECK (NEW)
 app.get('/health', async (req, res) => {
     try {
         const connection = await pool.getConnection();
         connection.release();
-        res.json({ status: 'OK', db: 'connected', message: 'Times Square Backend LIVE!' });
+        res.json({ 
+            status: 'OK', 
+            db: 'connected', 
+            message: 'Times Square Backend LIVE! 🚀' 
+        });
     } catch (error) {
         res.status(500).json({ status: 'ERROR', db: 'disconnected' });
     }
 });
 
-// ✅ ROOT ROUTE (NEW)
+// ✅ 2. ROOT ROUTE (NEW)
 app.get('/', (req, res) => {
-    res.json({
+    res.json({ 
         message: 'Times Square Academy Backend API ✅',
-        endpoints: ['/health', '/login', '/teachers', '/StudentData'],
+        endpoints: [
+            '/health', 
+            '/login', 
+            '/teachers', 
+            '/StudentData',
+            '/teacherData (POST)'
+        ],
         status: 'production'
     });
 });
 
-// ✅ YOUR API ROUTES (ALL RESTORED)
+// ✅ 3. YOUR ORIGINAL API ROUTES (ALL RESTORED)
 app.get("/login", (req, res) => Login(req, res, pool));
 app.get("/teachers", (req, res) => getData(req, res, pool));
 app.post("/teacherData", (req, res) => addingTeacher(req, res, pool));
@@ -64,12 +74,12 @@ app.post("/StudentData", (req, res) => StudentData(req, res, pool));
 app.post("/updateStudentData", (req, res) => updateStudentData(req, res, pool));
 app.post("/deletingStudentData", (req, res) => deletingStudentData(req, res, pool));
 
-// ✅ Serve React AFTER API routes
+// ✅ 4. React static files (AFTER API routes)
 const reactBuildPath = path.join(__dirname, "view", "build");
 app.use(express.static(reactBuildPath));
 
-// ✅ Catch-all for React SPA (AFTER API routes)
-app.get('*', (req, res) => {
+// ✅ 5. React SPA catch-all (CORRECT SYNTAX)
+app.get('/app/*', (req, res) => {
     res.sendFile(path.join(reactBuildPath, "index.html"));
 });
 
