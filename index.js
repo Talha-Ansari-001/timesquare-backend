@@ -41,13 +41,6 @@ app.get('/health', async (req, res) => {
 });
 
 // Root route
-app.get('/', (req, res) => {
-    res.json({
-        message: 'Times Square Academy Backend API ✅',
-        endpoints: ['/health', '/login', '/teachers', '/StudentData', '/teacherData (POST)'],
-        status: 'production'
-    });
-});
 
 // ALL API ROUTES FIRST
 app.get("/login", (req, res) => Login(req, res, pool));
@@ -61,6 +54,14 @@ app.post("/updateStudentData", (req, res) => updateStudentData(req, res, pool));
 app.post("/deletingStudentData", (req, res) => deletingStudentData(req, res, pool));
 
 // Serve React static files
+app.get('/', (req, res) => {
+    res.json({
+        message: 'Times Square Academy Backend API ✅',
+        endpoints: ['/health', '/login', '/teachers', '/StudentData', '/teacherData (POST)'],
+        status: 'production'
+    });
+});
+
 const reactBuildPath = path.join(__dirname, "view", "build");
 app.use(express.static(reactBuildPath));
 
