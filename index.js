@@ -65,8 +65,9 @@ const reactBuildPath = path.join(__dirname, "view", "build");
 app.use(express.static(reactBuildPath));
 
 // 🔥 FIXED CATCH-ALL - WORKS IN EXPRESS 5 (Replace line 68)
+
 app.use((req, res) => {
-    res.sendFile(path.join(reactBuildPath, "index.html"));
+    res.sendFile(path.join(__dirname, 'view', 'build', 'index.html'));
 });
 
 app.listen(PORT, async () => {
