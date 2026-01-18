@@ -29,7 +29,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
+// ========================================
+// 1. HEALTH CHECK ✅
+// ========================================
 app.get('/health', async (req, res) => {
     try {
         const connection = await pool.getConnection();
@@ -40,9 +42,9 @@ app.get('/health', async (req, res) => {
     }
 });
 
-// Root route
-
-// ALL API ROUTES FIRST
+// ========================================
+// 2. ALL API ROUTES ✅ (KEEP WORKING)
+// ========================================
 app.get("/login", (req, res) => Login(req, res, pool));
 app.get("/teachers", (req, res) => getData(req, res, pool));
 app.post("/teacherData", (req, res) => addingTeacher(req, res, pool));
@@ -53,20 +55,15 @@ app.post("/StudentData", (req, res) => StudentData(req, res, pool));
 app.post("/updateStudentData", (req, res) => updateStudentData(req, res, pool));
 app.post("/deletingStudentData", (req, res) => deletingStudentData(req, res, pool));
 
-// Serve React static files
-app.get('/', (req, res) => {
-    res.json({
-        message: 'Times Square Academy Backend API ✅',
-        endpoints: ['/health', '/login', '/teachers', '/StudentData', '/teacherData (POST)'],
-        status: 'production'
-    });
-});
-
+// ========================================
+// 3. REACT STATIC FILES ✅
+// ========================================
 const reactBuildPath = path.join(__dirname, "view", "build");
 app.use(express.static(reactBuildPath));
 
-// 🔥 FIXED CATCH-ALL - WORKS IN EXPRESS 5 (Replace line 68)
-
+// ========================================
+// 4. CATCH-ALL ROUTE LAST ✅ (React Router)
+// ========================================
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'view', 'build', 'index.html'));
 });
@@ -77,10 +74,12 @@ app.listen(PORT, async () => {
         console.log('✅ MySQL Connected Successfully!');
         connection.release();
         console.log(`🚀 Server running on port ${PORT}`);
+        console.log(`🌐 React SPA + API LIVE at http://localhost:${PORT}`);
     } catch (error) {
         console.error('❌ MySQL connection failed:', error.message);
     }
 });
+
 
 
 // import express from "express";
