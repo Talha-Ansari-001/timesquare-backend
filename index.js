@@ -2,34 +2,25 @@ import express from "express";
 import cors from "cors";
 import mysql from "mysql2/promise";
 import path from "path";
-
-
+import { fileURLToPath } from 'url';
 
 const pool = mysql.createPool({
-    host: process.env.MYSQLHOST,        // containers-us-west-123.railway.app
-    port: parseInt(process.env.MYSQLPORT), // 3306
-    user: process.env.MYSQLUSER,        // root
-    password: process.env.MYSQLPASSWORD, // miEpEDydCZFepmGDUEYRGMNGfokoqRSf
-    database: process.env.MYSQLDATABASE, // railway
+    host: process.env.MYSQLHOST,
+    port: parseInt(process.env.MYSQLPORT),
+    user: process.env.MYSQLUSER,
+    password: process.env.MYSQLPASSWORD,
+    database: process.env.MYSQLDATABASE,
+    connectionLimit: 10,
     connectTimeout: 30000,
-    acquireTimeout: 60000,
-    timeout: 60000,
-    ssl: {
-        rejectUnauthorized: false      // ← RAILWAY SSL REQUIRED!
-    }
+    ssl: { rejectUnauthorized: false }
 });
 
 console.log('🔄 Connecting to MySQL...');
 console.log('Host:', process.env.MYSQLHOST);
 
-pool.getConnection()
-    .then(() => {
-        console.log('✅ MySQL Connected Successfully!');
-    })
-    .catch(err => {
-        console.error('❌ MySQL Connection Failed:', err.code, err.message);
-        process.exit(1);
-    });
+await pool.getConnection();
+console.log('✅ MySQL Connected Successfully!');
+
 
 // Your server code...
 
