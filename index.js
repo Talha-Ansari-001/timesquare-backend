@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Database connection (FIXED - no top-level await)
+// Database pool
 const pool = mysql.createPool({
     host: process.env.MYSQLHOST || 'maglev.proxy.rlwy.net',
     port: parseInt(process.env.MYSQLPORT) || 17152,
@@ -20,40 +20,40 @@ const pool = mysql.createPool({
     ssl: { rejectUnauthorized: false }
 });
 
-// IMPORT YOUR CONTROLLERS (ADD THESE)
+// IMPORT CONTROLLERS (UNCOMMENT FROM YOUR OLD CODE)
 import { Login } from "./Controllers/Login.js";
 import { getData, addingTeacher, updateData, deletingTeacherData } from "./Controllers/TeacherController.js";
 import { getStudentData, StudentData, updateStudentData, deletingStudentData } from "./Controllers/StudentController.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-let dbConnected = false;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// HEALTH CHECK (NEW)
+// ✅ HEALTH CHECK (NEW)
 app.get('/health', async (req, res) => {
     try {
         const connection = await pool.getConnection();
-        await connection.ping();
         connection.release();
-        dbConnected = true;
-        res.json({ 
-            status: 'OK', 
-            db: 'connected',
-            timestamp: new Date().toISOString()
-        });
+        res.json({ status: 'OK', db: 'connected', message: 'Times Square Backend LIVE!' });
     } catch (error) {
-        res.status(500).json({ status: 'ERROR', db: 'disconnected', error: error.message });
+        res.status(500).json({ status: 'ERROR', db: 'disconnected' });
     }
 });
 
-// API ROUTES (FIXED - BEFORE static files)
-app.get('/api/health', (req, res) => res.json({ status: 'API working' }));
+// ✅ ROOT ROUTE (NEW)
+app.get('/', (req, res) => {
+    res.json({
+        message: 'Times Square Academy Backend API ✅',
+        endpoints: ['/health', '/login', '/teachers', '/StudentData'],
+        status: 'production'
+    });
+});
 
+// ✅ YOUR API ROUTES (ALL RESTORED)
 app.get("/login", (req, res) => Login(req, res, pool));
 app.get("/teachers", (req, res) => getData(req, res, pool));
 app.post("/teacherData", (req, res) => addingTeacher(req, res, pool));
@@ -64,17 +64,13 @@ app.post("/StudentData", (req, res) => StudentData(req, res, pool));
 app.post("/updateStudentData", (req, res) => updateStudentData(req, res, pool));
 app.post("/deletingStudentData", (req, res) => deletingStudentData(req, res, pool));
 
-// Serve React build (AFTER API routes)
+// ✅ Serve React AFTER API routes
 const reactBuildPath = path.join(__dirname, "view", "build");
 app.use(express.static(reactBuildPath));
 
-app.get(/.*/, (req, res) => {
+// ✅ Catch-all for React SPA (AFTER API routes)
+app.get('*', (req, res) => {
     res.sendFile(path.join(reactBuildPath, "index.html"));
-});
-
-// 404 for API routes only
-app.use('/api/*', (req, res) => {
-    res.status(404).json({ error: 'API endpoint not found' });
 });
 
 app.listen(PORT, async () => {
